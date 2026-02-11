@@ -26,7 +26,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: bundle exec puma -C config/puma.rb
+    command: sh -lc "bundle exec ruby scripts/migrate.rb && bundle exec puma -C config/puma.rb"
 
 volumes:
   postgres_data:

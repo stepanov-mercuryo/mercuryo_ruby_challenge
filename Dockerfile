@@ -13,6 +13,6 @@ RUN bundle install
 
 COPY app/ ./
 
-EXPOSE 3000
+EXPOSE 4321
 
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
