@@ -7,12 +7,12 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY Gemfile Gemfile.lock* ./
+COPY app/Gemfile app/Gemfile.lock* ./
 
 RUN bundle install
 
-COPY . .
+COPY app/ ./
 
 EXPOSE 3000
 
-CMD ["bundle", "exec", "puma", "-C", "app/config/puma.rb"]
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]

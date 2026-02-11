@@ -9,9 +9,9 @@ module Controllers
 
     get :health do
       # Check database connection
-      DB.test_connection
+      DB.run('SELECT 1')
       { status: 'ok' }
-    rescue Sequel::DatabaseConnectionError => e
+    rescue Sequel::DatabaseConnectionError, Sequel::DatabaseError => e
       error!({ status: 'error', message: 'Database connection failed' }, 503)
     end
   end

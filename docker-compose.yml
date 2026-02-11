@@ -22,11 +22,11 @@ services:
       - PORT=4321
       - DATABASE_URL=postgresql://mercuryo:mercuryo@db:5432/mercuryo_challenge
     volumes:
-      - .:/app
+      - ./app:/app
     depends_on:
       db:
         condition: service_healthy
-    command: bundle exec puma -C app/config/puma.rb
+    command: bundle exec puma -C config/puma.rb
 
 volumes:
   postgres_data:
