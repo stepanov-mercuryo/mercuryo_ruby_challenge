@@ -13,6 +13,19 @@ services:
       timeout: 5s
       retries: 5
 
+  migrate:
+    build: .
+    environment:
+      - RACK_ENV=development
+      - DATABASE_URL=postgresql://mercuryo:mercuryo@db:5432/mercuryo_challenge
+    volumes:
+      - ./app:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: bundle exec ruby db/migrate.rb
+    restart: "no"
+
   api:
     build: .
     ports:
@@ -24,8 +37,8 @@ services:
     volumes:
       - ./app:/app
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     command: bundle exec puma -C config/puma.rb
 
 volumes:

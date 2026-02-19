@@ -4,15 +4,10 @@
 
 Необходимо реализовать сервис аккаунтинга, который ведет учет балансов и транзакций.
 
-## Требования
-
-Сервис должен поддерживать:
-
-1. **Пополнение баланса** - одностадийная атомарная операция, которая сразу завершается и обновляет баланс аккаунта.
-
-2. **Списание с баланса** - двухстадийная операция:
-   - Первая стадия: резервирование средств (создание транзакции со статусом `pending`)
-   - Вторая стадия: подтверждение или отмена списания (изменение статуса на `completed` или `cancelled`)
+К каждому магазину будет привязан счет.
+Он будет пополняться виртуальной суммой менеджером.
+При прохождении успешного платежа, его сумма должна списываться со счета.
+Если денег на счету недостаточно - платеж должен отклоняться.
 
 ### Требования к производительности
 
@@ -20,25 +15,42 @@
 - Количество аккаунтов: тысячи
 - Объем транзакций: десятки миллионов записей
 
-### Структура базы данных
+## Текущая архитектура сервисов
 
-#### Таблица `accounts`
-- `id` (primary key)
-- `balance` (decimal) - текущий баланс аккаунта, 2 десятичных знака
-- `currency` (string) - валюта аккаунта
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
+```mermaid
+flowchart LR
+    A["api-gateway"] --> B["core"]
+    B --> C["provider-gateway"]
+    B --> D["antifraud"]
+    C --> B
+    D --> B
+```
 
-#### Таблица `transactions`
-- `id` (primary key)
-- `account_id` (foreign key -> accounts.id)
-- `currency` (string) - валюта транзакции
-- `amount` (decimal) - сумма транзакции (может быть положительной для пополнения и отрицательной для списания)
-- `status` (string) - статус транзакции:
-  - `pending` - транзакция в процессе (для двухстадийного списания)
-  - `completed` - транзакция завершена успешно
-  - `cancelled` - транзакция отменена
-- `uuid` (string, unique) - уникальный идентификатор транзакции
-- `transaction_type` (string) - тип транзакции: `deposit` (пополнение) или `withdrawal` (списание)
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
+## Текущая схема статусов
+
+```mermaid
+stateDiagram-v2
+    [*] --> created
+
+    created --> antifraud_check_success
+    created --> antifraud_check_failed
+    antifraud_check_failed --> [*]
+
+    antifraud_check_success --> provider_payout_processing
+
+    provider_payout_processing --> provider_payout_processing
+    provider_payout_processing --> provider_payout_failed
+    provider_payout_processing --> provider_payout_success
+
+    provider_payout_failed --> [*]
+    provider_payout_success --> [*]
+```
+
+## Миграции (Sequel)
+
+Запуск миграций:
+
+```bash
+cd app
+bundle exec ruby db/migrate.rb
+```
